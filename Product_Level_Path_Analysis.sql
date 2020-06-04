@@ -1,74 +1,76 @@
 -- Product Level Website Path Analysis
 
--- select subset of website sessions that clicked to products (denominator of sessions)
--- for each session, find the minimum website_pageview_id (or min created_at) where pageview_url = /products, print this value in column
--- also for each session, find the 2nd 
+USE ecommerce_data;
 
-
--- for each session that went to products, take the subset that went to another page
--- list urls that they visted directly after
-
--- Finish later
-
-
--- select only sessions that made it to product page (do this for both time windows)
--- then find subset that made it to at least one other page after visting products page AND return the url of the next page this session_id visited (via 2nd min website pageview ID linked via website_session_id)
-
--- then find subset that made it     "             "                 "              "   AND next url page returned == mr_fuzzy
--- then find subset that made it     "             "                 "              "   AND next url page returned == love_bear
-
-
--- eligible sessions
+CREATE TEMPORARY TABLE product_pageviews
 SELECT
+
 	website_session_id,
-	MIN( CASE WHEN pageview_url = '/product' THEN website_pageview_id ELSE NULL END ) AS min_product_pageview_id,
-    
-   
-    
-    -- return url of min pageview_id
-    -- return 2nd min pageview_id
-    -- return url of 2nd min pageview_id
-    
-    
-FROM website_pageviews
+    website_pageview_id,
+    created_at,
+    CASE 
+		WHEN created_at < '2013-01-06' THEN 'A_pre_product'
+        WHEN created_at >= '2013-01-06' THEN 'B_post_product'
+        ELSE 'logic error'
+        
+	END AS time_period 
+FROM website_pageviews 
 
-WHERE created_at BETWEEN '2013-01-05' AND '2013-04-06'
+WHERE
+	created_at > '2012-10-06'
+    AND created_at < '2013-04-06'
+    AND pageview_url = '/products'
+;
+    
 
-GROUP BY website_session_id
+-- next session ID's
 
+CREATE TEMPORARY TABLE next_session_id
+SELECT 
+	product_pageviews.time_period,
+    product_pageviews.website_session_id,
+    MIN( website_pageviews.website_pageview_id) AS min_next_pageview_id
+
+FROM product_pageviews
+
+LEFT JOIN website_pageviews
+	ON website_pageviews.website_session_id = product_pageviews.website_session_id
+    AND website_pageviews.website_pageview_id > product_pageviews.website_pageview_id
+
+GROUP BY 1,2
 ;
 
 
- -- MIN( CASE WHEN website_pageview_id > ( MIN( CASE WHEN pageview_url = '/product' THEN website_pageview_id ELSE NULL END) ) THEN website_pageview_id ELSE NULL END) AS second_min_product_pageview_id, 
+-- CREATE TEMPORARY TABLE merged_table1
+SELECT
+	next_session_id.time_period,
+    next_session_id.website_session_id,
+    next_session_id.min_next_pageview_id,
+    website_pageviews.pageview_url
+
+FROM next_session_id
+
+LEFT JOIN website_pageviews
+	ON website_pageviews.website_pageview_id = next_session_id.min_next_pageview_id
+;
 
 
 SELECT
-	
-	COUNT( DISTINCT website_pageviews ) AS sessions,
-	COUNT( CASE WHEN THEN ELSE END) AS w_nextpage,
-	AS pct_nextpage,
-	COUNT( CASE WHEN THEN ELSE END ) AS mrfuzzy,
-	AS pct_mrfuzzy,
-	COUNT( CASE WHEN THEN ELSE END ) AS lovebear,
-	AS pct_lovebear
 
-FROM website_pageviews
+	merged_table1.time_period,
+    COUNT( DISTINCT merged_table1.website_session_id) AS sessions,
+    COUNT( DISTINCT merged_table1.min_next_pageview_id ) AS sessions_w_next_page,
+	COUNT( DISTINCT merged_table1.min_next_pageview_id ) / COUNT( DISTINCT merged_table1.website_session_id) AS pct_next_page,
+    COUNT( CASE WHEN merged_table1.pageview_url = '/the-original-mr-fuzzy' THEN merged_table1.pageview_url ELSE NULL END ) AS mr_fuzzy,
+	COUNT( CASE WHEN merged_table1.pageview_url = '/the-original-mr-fuzzy' THEN merged_table1.pageview_url ELSE NULL END) /  COUNT( DISTINCT merged_table1.website_session_id) AS pct_mr_fuzzy,
+    COUNT( CASE WHEN merged_table1.pageview_url = '/the-forever-love-bear' THEN merged_table1.pageview_url ELSE NULL END) AS love_bear,
+    COUNT( CASE WHEN merged_table1.pageview_url = '/the-forever-love-bear' THEN merged_table1.pageview_url ELSE NULL END) /  COUNT( DISTINCT merged_table1.website_session_id) AS pct_love_bear
+    
+FROM merged_table1
 
-WHERE created_at BETWEEN '2013-01-05' AND '2013-04-06'
-
-
-ORDER BY
-;
+GROUP BY merged_table1.time_period;
 
 
-
-SELECT
-
-FROM website_pageviews
-
-WHERE created_at BETWEEN '2012-10-05' AND '2013-01-06' 
-
-GROUP BY
-
-ORDER BY
-;
+DROP TABLE product_pageviews;
+DROP TABLE next_session_id;  
+DROP TABLE merged_table1;
