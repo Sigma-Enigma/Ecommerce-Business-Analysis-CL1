@@ -74,16 +74,19 @@ SELECT
     -- website_pageviews.website_session_id,
     COUNT( DISTINCT website_pageviews.website_session_id) AS cart_sessions,
     COUNT( DISTINCT t3.website_session_id) AS shipping_sessions,
+     COUNT( DISTINCT t3.website_session_id) / COUNT( DISTINCT website_pageviews.website_session_id) AS ship_ctr,
     COUNT( DISTINCT t2.website_session_id) AS conversion_sessions,
-	COUNT( DISTINCT t2.website_session_id) / COUNT( DISTINCT website_pageviews.website_session_id) AS ctr,
+	COUNT( DISTINCT t2.website_session_id) / COUNT( DISTINCT website_pageviews.website_session_id) AS conv_ctr,
     COUNT( DISTINCT orders.order_id ) AS tot_orders,
 	COUNT( DISTINCT order_items.order_item_id) AS tot_order_items,
-    COUNT( DISTINCT order_items.order_item_id) / COUNT( DISTINCT orders.order_id ) AS prods_per_order,
-	SUM( order_items.price_usd  ) AS tot_sales,
-    SUM( order_items.cogs_usd ) AS tot_costs,
-    SUM( order_items.price_usd  ) - SUM( order_items.cogs_usd ) AS revenue,
-	ROUND( (SUM( order_items.price_usd  ) - SUM( order_items.cogs_usd ) ) / COUNT(DISTINCT orders.order_id), 2) AS avg_rev_per_order,
-    ROUND( (SUM( order_items.price_usd  ) - SUM( order_items.cogs_usd ) ) / COUNT( DISTINCT website_pageviews.website_session_id), 2) AS avg_rev_per_sess
+    COUNT( DISTINCT order_items.order_item_id) / COUNT( DISTINCT orders.order_id ) AS avg_prods_per_order,
+	SUM( order_items.price_usd  ) AS revenue,
+    SUM( order_items.cogs_usd ) AS costs,
+    SUM( order_items.price_usd  ) - SUM( order_items.cogs_usd ) AS profit,
+	ROUND( SUM( order_items.price_usd  ) / COUNT(DISTINCT orders.order_id), 2) AS avg_rev_per_order,
+    ROUND( SUM( order_items.price_usd  ) / COUNT( DISTINCT website_pageviews.website_session_id), 2) AS avg_rev_per_sess,
+    ROUND( (SUM( order_items.price_usd  ) - SUM( order_items.cogs_usd ) ) / COUNT(DISTINCT orders.order_id), 2) AS avg_profit_per_order,
+	ROUND( (SUM( order_items.price_usd  ) - SUM( order_items.cogs_usd ) ) / COUNT( DISTINCT website_pageviews.website_session_id), 2) AS avg_profit_per_sess
     
     
 FROM website_pageviews
