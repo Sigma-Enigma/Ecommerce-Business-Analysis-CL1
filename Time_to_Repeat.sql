@@ -22,6 +22,7 @@ ORDER BY user_id ASC, created_at ASC
 -- then using website session ID, ladd all repeat values and their created_at times onto one table linking by user_id
 -- then use timediff() function to calculate   
 
+
 SELECT
 	ws1.user_id,
 	MIN(ws1.website_session_id) first_ws_id,
@@ -34,3 +35,32 @@ WHERE ws1.created_at BETWEEN '2014-01-01' AND '2014-11-04'
 GROUP BY ws1.user_id
 ORDER BY ws1.user_id ASC
 ; -- using website_session_id antijoin to remove 2nd table session_ids from original table, then find use min to find 2nd min and store as 3rd table
+
+
+CREATE TEMPORARY TABLE t1
+SELECT
+	ws1.user_id,
+	MIN(ws1.website_session_id) first_ws_id,
+    MIN(ws1.created_at) AS first_ws_time
+
+FROM website_sessions AS ws1
+    
+WHERE ws1.created_at BETWEEN '2014-01-01' AND '2014-11-04'
+
+GROUP BY ws1.user_id
+ORDER BY ws1.user_id ASC
+;
+
+
+
+SELECT
+*
+FROM website_sessions
+LEFT JOIN t1
+	ON t1.first_ws_id = website_sessions.website_session_id
+
+WHERE wt1.first_ws_id IS NULL
+;
+    
+DROP TABLE t1; -- now take min of this one to get table of 2nd mins
+
