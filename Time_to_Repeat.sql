@@ -9,7 +9,8 @@ USE ecommerce_data;
 SELECT
 	user_id,
 	website_session_id,
-	created_at
+	created_at,
+    is_repeat_session
 
 FROM website_sessions
 
@@ -39,7 +40,7 @@ ORDER BY ws1.user_id ASC
 
 CREATE TEMPORARY TABLE t1
 SELECT
-	ws1.user_id,
+	ws1.user_id AS user_id,
 	MIN(ws1.website_session_id) first_ws_id,
     MIN(ws1.created_at) AS first_ws_time
 
@@ -54,13 +55,311 @@ ORDER BY ws1.user_id ASC
 
 
 SELECT
-*
+	website_sessions.user_id,
+    website_sessions.website_session_id,
+    website_sessions.created_at,
+    website_sessions.is_repeat_session
+    
 FROM website_sessions
 LEFT JOIN t1
 	ON t1.first_ws_id = website_sessions.website_session_id
 
-WHERE wt1.first_ws_id IS NULL
+WHERE 
+	t1.first_ws_id IS NULL
+	AND website_sessions.created_at BETWEEN '2014-01-01' AND '2014-11-04'
+ORDER BY website_sessions.user_id ASC, website_sessions.website_session_id ASC
 ;
+
+CREATE TEMPORARY TABLE t2
+SELECT
+	website_sessions.user_id,
+	website_sessions.website_session_id,
+    website_sessions.created_at,
+    website_sessions.is_repeat_session
     
+FROM website_sessions
+LEFT JOIN t1
+	ON t1.first_ws_id = website_sessions.website_session_id
+
+WHERE 
+	t1.first_ws_id IS NULL
+	AND website_sessions.created_at BETWEEN '2014-01-01' AND '2014-11-04'
+ORDER BY website_sessions.user_id ASC, website_sessions.website_session_id ASC
+;
+
+
+SELECT
+	ws2.user_id AS user_id,
+	MIN(ws2.website_session_id) second_ws_id,
+    MIN(ws2.created_at) AS second_ws_time
+
+FROM t2 AS ws2
+    
+WHERE ws2.created_at BETWEEN '2014-01-01' AND '2014-11-04'
+
+GROUP BY ws2.user_id
+ORDER BY ws2.user_id ASC
+;
+
+CREATE TEMPORARY TABLE t3
+SELECT
+	ws2.user_id AS user_id,
+	MIN(ws2.website_session_id) second_ws_id,
+    MIN(ws2.created_at) AS second_ws_time
+
+FROM t2 AS ws2
+    
+WHERE ws2.created_at BETWEEN '2014-01-01' AND '2014-11-04'
+
+GROUP BY ws2.user_id
+ORDER BY ws2.user_id ASC
+;
+
+SELECT
+	t2.user_id,
+	t2.website_session_id,
+    t2.created_at,
+    t2.is_repeat_session
+    
+FROM t2
+LEFT JOIN t3
+	ON t3.second_ws_id = t2.website_session_id
+
+WHERE 
+	t3.second_ws_id IS NULL
+	AND t2.created_at BETWEEN '2014-01-01' AND '2014-11-04'
+ORDER BY t2.user_id ASC, t2.website_session_id ASC
+;
+
+CREATE TEMPORARY TABLE t4
+SELECT
+	t2.user_id,
+	t2.website_session_id,
+    t2.created_at,
+    t2.is_repeat_session
+    
+FROM t2
+LEFT JOIN t3
+	ON t3.second_ws_id = t2.website_session_id
+
+WHERE 
+	t3.second_ws_id IS NULL
+	AND t2.created_at BETWEEN '2014-01-01' AND '2014-11-04'
+ORDER BY t2.user_id ASC, t2.website_session_id ASC
+;
+
+SELECT
+	ws3.user_id AS user_id,
+	MIN(ws3.website_session_id) third_ws_id,
+    MIN(ws3.created_at) AS third_ws_time
+
+FROM t4 AS ws3
+    
+WHERE ws3.created_at BETWEEN '2014-01-01' AND '2014-11-04'
+
+GROUP BY ws3.user_id
+ORDER BY ws3.user_id ASC
+;
+
+CREATE TEMPORARY TABLE t5
+SELECT
+	ws3.user_id AS user_id,
+	MIN(ws3.website_session_id) third_ws_id,
+    MIN(ws3.created_at) AS third_ws_time
+
+FROM t4 AS ws3
+    
+WHERE ws3.created_at BETWEEN '2014-01-01' AND '2014-11-04'
+
+GROUP BY ws3.user_id
+ORDER BY ws3.user_id ASC
+;
+
+SELECT
+	t4.user_id,
+	t4.website_session_id,
+    t4.created_at,
+    t4.is_repeat_session
+    
+FROM t4
+LEFT JOIN t5
+	ON t5.third_ws_id = t4.website_session_id
+
+WHERE 
+	t5.third_ws_id IS NULL
+	AND t4.created_at BETWEEN '2014-01-01' AND '2014-11-04'
+ORDER BY t4.user_id ASC, t4.website_session_id ASC
+;
+
+CREATE TEMPORARY TABLE t6
+SELECT
+	t4.user_id,
+	t4.website_session_id,
+    t4.created_at,
+    t4.is_repeat_session
+    
+FROM t4
+LEFT JOIN t5
+	ON t5.third_ws_id = t4.website_session_id
+
+WHERE 
+	t5.third_ws_id IS NULL
+	AND t4.created_at BETWEEN '2014-01-01' AND '2014-11-04'
+ORDER BY t4.user_id ASC, t4.website_session_id ASC
+;
+
+SELECT
+	ws4.user_id AS user_id,
+	MIN(ws4.website_session_id) fourth_ws_id,
+    MIN(ws4.created_at) AS fourth_ws_time
+
+FROM t6 AS ws4
+    
+WHERE ws4.created_at BETWEEN '2014-01-01' AND '2014-11-04'
+
+GROUP BY ws4.user_id
+ORDER BY ws4.user_id ASC
+;
+
+CREATE TEMPORARY TABLE t7
+SELECT
+	ws4.user_id AS user_id,
+	MIN(ws4.website_session_id) fourth_ws_id,
+    MIN(ws4.created_at) AS fourth_ws_time
+
+FROM t6 AS ws4
+    
+WHERE ws4.created_at BETWEEN '2014-01-01' AND '2014-11-04'
+
+GROUP BY ws4.user_id
+ORDER BY ws4.user_id ASC
+;
+
+SELECT
+	t6.user_id,
+	t6.website_session_id,
+    t6.created_at,
+    t6.is_repeat_session
+    
+FROM t6
+LEFT JOIN t7
+	ON t7.fourth_ws_id = t6.website_session_id
+
+WHERE 
+	t7.fourth_ws_id IS NULL
+	AND t6.created_at BETWEEN '2014-01-01' AND '2014-11-04'
+ORDER BY t6.user_id ASC, t6.website_session_id ASC
+;
+
+CREATE TEMPORARY TABLE t8
+SELECT
+	t6.user_id,
+	t6.website_session_id,
+    t6.created_at,
+    t6.is_repeat_session
+    
+FROM t6
+LEFT JOIN t7
+	ON t7.fourth_ws_id = t6.website_session_id
+
+WHERE 
+	t7.fourth_ws_id IS NULL
+	AND t6.created_at BETWEEN '2014-01-01' AND '2014-11-04'
+ORDER BY t6.user_id ASC, t6.website_session_id ASC
+;
+
+SELECT
+	ws5.user_id AS user_id,
+	MIN(ws5.website_session_id) fifth_ws_id,
+    MIN(ws5.created_at) AS fifth_ws_time
+
+FROM t8 AS ws5
+    
+WHERE ws5.created_at BETWEEN '2014-01-01' AND '2014-11-04'
+
+GROUP BY ws5.user_id
+ORDER BY ws5.user_id ASC
+;
+
+CREATE TEMPORARY TABLE t9
+SELECT
+	ws5.user_id AS user_id,
+	MIN(ws5.website_session_id) fifth_ws_id,
+    MIN(ws5.created_at) AS fifth_ws_time
+
+FROM t8 AS ws5
+    
+WHERE ws5.created_at BETWEEN '2014-01-01' AND '2014-11-04'
+
+GROUP BY ws5.user_id
+ORDER BY ws5.user_id ASC
+;
+
+SELECT
+	t8.user_id,
+	t8.website_session_id,
+    t8.created_at,
+    t8.is_repeat_session
+    
+FROM t8
+LEFT JOIN t9
+	ON t9.fifth_ws_id = t8.website_session_id
+
+WHERE 
+	t9.fifth_ws_id IS NULL
+	AND t8.created_at BETWEEN '2014-01-01' AND '2014-11-04'
+ORDER BY t8.user_id ASC, t8.website_session_id ASC
+;
+
+CREATE TEMPORARY TABLE t10
+SELECT
+	t8.user_id,
+	t8.website_session_id,
+    t8.created_at,
+    t8.is_repeat_session
+    
+FROM t8
+LEFT JOIN t9
+	ON t9.fifth_ws_id = t8.website_session_id
+
+WHERE 
+	t9.fifth_ws_id IS NULL
+	AND t8.created_at BETWEEN '2014-01-01' AND '2014-11-04'
+ORDER BY t8.user_id ASC, t8.website_session_id ASC
+;
+
+SELECT COUNT(*)
+FROM t2
+;
+
+SELECT COUNT(*)
+FROM t4
+;
+
+SELECT COUNT(*)
+FROM t6
+;
+
+SELECT COUNT(*)
+FROM t8
+;
+
+SELECT COUNT(*)
+FROM t10
+;
+
+
+/*
 DROP TABLE t1; -- now take min of this one to get table of 2nd mins
+DROP TABLE t2; -- 
+DROP TABLE t3;
+DROP TABLE t4;
+DROP TABLE t5;
+DROP TABLE t6;
+DROP TABLE t7;
+DROP TABLE t8;
+DROP TABLE t9;
+DROP TABLE t10;
+
+*/
 
