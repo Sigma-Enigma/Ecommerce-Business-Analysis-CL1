@@ -349,6 +349,27 @@ FROM t10
 ;
 
 
+
+
+-- as we can see there were no 5th sessions
+-- now I need to find a way to aggregate the values
+
+SELECT
+	AVG( t4.created_at - t2.created_at ) AS avg_days_first_to_second,
+    MIN( t4.created_at - t2.created_at ) AS min_days_first_to_second,
+	MAX( t4.created_at - t2.created_at ) AS max_days_first_to_second
+
+FROM t2
+LEFT JOIN t4
+	ON t4.user_id = t2.user_id
+;
+
+-- convert this to days and done tdiff() ???
+-- note error for min days... may need to use created_at to find min instead of website_pageview_id
+
+    
+    
+
 /*
 DROP TABLE t1; -- now take min of this one to get table of 2nd mins
 DROP TABLE t2; -- 
