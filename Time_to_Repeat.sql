@@ -355,22 +355,64 @@ FROM t10
 -- now I need to find a way to aggregate the values
 
 SELECT
-	AVG( t4.created_at - t2.created_at ) AS avg_days_first_to_second,
-    MIN( t4.created_at - t2.created_at ) AS min_days_first_to_second,
-	MAX( t4.created_at - t2.created_at ) AS max_days_first_to_second
+	AVG( t4.created_at - t2.created_at )/(60*60*24) AS avg_days_first_to_second,
+    MIN( t4.created_at - t2.created_at )/(60*60*24) AS min_days_first_to_second,
+	MAX( t4.created_at - t2.created_at )/(60*60*24) AS max_days_first_to_second
 
 FROM t2
 LEFT JOIN t4
 	ON t4.user_id = t2.user_id
 ;
 
--- convert this to days and done tdiff() ???
--- note error for min days... may need to use created_at to find min instead of website_pageview_id
+
+SELECT
+	t2.user_id AS second_user_id,
+    website_sessions.user_id AS first_user_id,
+    t2.website_session_id AS second_web_id,
+    website_sessions.website_session_id AS first_web_id,
+	t2.created_at AS second_session,
+    website_sessions.created_at AS first_session,
+    t2.created_at - website_sessions.created_at AS time_diff,
+    (t2.created_at - website_sessions.created_at)/(60*60*24) AS time_diff2,
+    DATEDIFF(t2.created_at, website_sessions.created_at) AS time_diff3
+    
+FROM t2
+LEFT JOIN website_sessions
+	ON website_sessions.user_id = t2.user_id AND website_sessions.is_repeat_session = 0
+; -- preping tables for aggregate functions
+
+CREATE TEMPORARY TABLE tfinal
+SELECT
+	t2.user_id AS second_user_id,
+    website_sessions.user_id AS first_user_id,
+    t2.website_session_id AS second_web_id,
+    website_sessions.website_session_id AS first_web_id,
+	t2.created_at AS second_session,
+    website_sessions.created_at AS first_session,
+    t2.created_at - website_sessions.created_at AS time_diff,
+    (t2.created_at - website_sessions.created_at)/(60*60*24) AS time_diff2,
+    DATEDIFF(t2.created_at, website_sessions.created_at) AS time_diff3
+    
+FROM t2
+LEFT JOIN website_sessions
+	ON website_sessions.user_id = t2.user_id AND website_sessions.is_repeat_session = 0
+; 
+
+SELECT
+	AVG( tfinal.time_diff3 ) AS avg_days_first_to_second,
+    MIN( tfinal.time_diff3 ) AS min_days_first_to_second,
+	MAX( tfinal.time_diff3 ) AS max_days_first_to_second
+
+FROM tfinal
+; -- check table values before merge for tfinal to ensure the proper rows were queried
+
+
+-- 
+-- note only needed first repeat... thus we can just use the is_repeat_session variable and find min website_session_id, all my work above was in the case of finding subsequent repeats
 
     
-    
 
-/*
+
 DROP TABLE t1; -- now take min of this one to get table of 2nd mins
 DROP TABLE t2; -- 
 DROP TABLE t3;
@@ -381,6 +423,7 @@ DROP TABLE t7;
 DROP TABLE t8;
 DROP TABLE t9;
 DROP TABLE t10;
+DROP TABLE tfinal;
 
-*/
+
 
