@@ -52,8 +52,18 @@ GROUP BY 1,2
 SELECT 
 	YEAR(website_sessions.created_at) AS yr,
     MONTH(website_sessions.created_at) AS mo, -- cool note: you can round to nearest hundred using negative integer values
-    ROUND( SUM(orders.price_usd)/1000, 3) AS 'rev_metric_per_1k' -- change later to specific product level metric using case for each product
-    
+    ROUND( SUM(orders.price_usd)/1000, 3) AS 'rev_in_thousands', -- change later to specific product level metric using case for each product
+    ROUND( SUM(orders.price_usd  - orders.cogs_usd)/1000, 3) AS 'margin_in_thousands',
+    COUNT( orders.order_id) AS total_sales,
+	ROUND( SUM( CASE WHEN orders.primary_product_id = 1 THEN orders.price_usd / 1000 ELSE NULL END ), 3) AS rev_prod1,
+    ROUND( SUM( CASE WHEN orders.primary_product_id = 1 THEN (orders.price_usd - orders.cogs_usd) / 1000 ELSE NULL END ), 3) AS margin_prod1,
+    ROUND( SUM( CASE WHEN orders.primary_product_id = 2 THEN orders.price_usd / 1000 ELSE NULL END ), 3) AS rev_prod2,
+    ROUND( SUM( CASE WHEN orders.primary_product_id = 2 THEN (orders.price_usd - orders.cogs_usd) / 1000 ELSE NULL END ), 3) AS margin_prod2,
+    ROUND( SUM( CASE WHEN orders.primary_product_id = 3 THEN orders.price_usd / 1000 ELSE NULL END ), 3) AS rev_prod3,
+    ROUND( SUM( CASE WHEN orders.primary_product_id = 3 THEN (orders.price_usd - orders.cogs_usd) / 1000 ELSE NULL END ), 3) AS margin_prod3,
+    ROUND( SUM( CASE WHEN orders.primary_product_id = 4 THEN orders.price_usd / 1000 ELSE NULL END ), 3) AS rev_prod4,
+    ROUND( SUM( CASE WHEN orders.primary_product_id = 4 THEN (orders.price_usd - orders.cogs_usd) / 1000  ELSE NULL END ), 3) AS margin_prod4
+        
 FROM website_sessions
 LEFT JOIN orders
 	ON website_sessions.website_session_id = orders.website_session_id
@@ -63,3 +73,4 @@ WHERE website_sessions.created_at BETWEEN '2012-01-01' AND '2015-03-20'
 GROUP BY 1, 2
 ;
 
+-- Ideally the above tables would be plotted as a time series to visualize trends and seasonality
