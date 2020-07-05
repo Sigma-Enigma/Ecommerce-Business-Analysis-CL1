@@ -82,10 +82,40 @@ FROM website_pageviews
 LEFT JOIN orders
 	ON website_pageviews.website_session_id = orders.website_session_id -- This is the 2nd phase; may need a separate join for website_pageview_id for product pages for first phase
 
-WHERE website_pageviews.created_at < '2015-03-20'
+WHERE website_pageviews.created_at < '2015-03-20' AND website_pageviews.pageview_url = '/products'
 
-; -- cut down to only first product per session_id
+; -- cut down to only first product per session_id use min /products per 
 
 
 -- counts of views to /products pageview_url and conversin rates to next pages in funnel ( first select first /products pageview by finding (pageview_id, where pageview_url = /products), then self join to website_pageviews with same session_id and a pageview_id > itself (if it doesnt it will return NULL), also conversion rates from /products to order_id
 -- left join website_pageviews to orders via website_session_id
+CREATE TEMPORARY TABLE t1
+SELECT
+	website_pageviews.website_session_id AS website_session_id1,
+	MIN( website_pageviews.website_pageview_id) AS min_prod_pageview_id
+    
+FROM website_pageviews
+LEFT JOIN orders
+	ON website_pageviews.website_session_id = orders.website_session_id -- This is the 2nd phase; may need a separate join for website_pageview_id for product pages for first phase
+
+WHERE website_pageviews.created_at < '2015-03-20' AND website_pageviews.pageview_url = '/products'
+
+GROUP BY 1
+; -- first product view pageview_id per session table
+
+
+SELECT
+	YEAR(  website_pageviews.created_at) AS yr,
+    MONTH(  website_pageviews.created_at) AS mo,
+    COUNT(  website_pageviews.website_session_id) AS sessions,
+    COUNT(  orders.order_id) AS orders,
+    COUNT(  orders.order_id) / COUNT(  website_pageviews.website_session_id) AS '% conv_rate'
+FROM t1
+LEFT JOIN website_pageviews
+	ON t1.min_prod_pageview_id = website_pageviews.website_pageview_id
+LEFT JOIN orders
+	ON t1.website_session_id1 = orders.website_session_id
+GROUP BY 1, 2
+;
+
+-- next for funnel analysis you must use first time product and link to dataset with all pageviews with pageview ID's > the first pageview ID PER SESSION (double condition for join command)
