@@ -74,3 +74,18 @@ GROUP BY 1, 2
 ;
 
 -- Ideally the above tables would be plotted as a time series to visualize trends and seasonality
+
+SELECT
+	*
+    
+FROM website_pageviews
+LEFT JOIN orders
+	ON website_pageviews.website_session_id = orders.website_session_id -- This is the 2nd phase; may need a separate join for website_pageview_id for product pages for first phase
+
+WHERE website_pageviews.created_at < '2015-03-20'
+
+; -- cut down to only first product per session_id
+
+
+-- counts of views to /products pageview_url and conversin rates to next pages in funnel ( first select first /products pageview by finding (pageview_id, where pageview_url = /products), then self join to website_pageviews with same session_id and a pageview_id > itself (if it doesnt it will return NULL), also conversion rates from /products to order_id
+-- left join website_pageviews to orders via website_session_id
