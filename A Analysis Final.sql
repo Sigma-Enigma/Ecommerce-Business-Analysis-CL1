@@ -119,3 +119,15 @@ GROUP BY 1, 2
 ;
 
 -- next for funnel analysis you must use first time product and link to dataset with all pageviews with pageview ID's > the first pageview ID PER SESSION (double condition for join command)
+
+-- 7. Cross sell analysis for products from '2014-12-05' to current date
+
+SELECT 
+	*
+    
+FROM order_items
+
+WHERE created_at BETWEEN '2014-12-06' AND '2015-03-20'
+
+;
+
