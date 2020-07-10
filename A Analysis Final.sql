@@ -131,3 +131,7 @@ WHERE created_at BETWEEN '2014-12-06' AND '2015-03-20'
 
 ;
 
+-- note for this final analysis 
+
+-- remember to include the summary here
+
