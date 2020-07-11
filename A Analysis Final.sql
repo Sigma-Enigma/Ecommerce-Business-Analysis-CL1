@@ -122,16 +122,32 @@ GROUP BY 1, 2
 
 -- 7. Cross sell analysis for products from '2014-12-05' to current date
 
+CREATE TEMPORARY TABLE primary_products
 SELECT 
-	*
-    
-FROM order_items
+	order_id,
+    primary_product_id,
+    created_at AS ordered_at
 
-WHERE created_at BETWEEN '2014-12-06' AND '2015-03-20'
+FROM orders
 
+WHERE created_at BETWEEN '2014-12-05' AND '2015-03-20'
 ;
 
--- note for this final analysis 
+
+SELECT
+	primary_products.*,
+    order_items.product_id AS cross_sell_product_id
+
+FROM primary_products
+LEFT JOIN order_items
+	ON order_items.order_id = primary_products.order_id
+    AND order_items.is_primary_item = 0 -- only cross sell prods
+;
+
+DROP TABLE primary_products;
+-- self join? include secondary and tertiary items in same row? per order?
+
+-- note for this final analysis
 
 -- remember to include the summary here
 
