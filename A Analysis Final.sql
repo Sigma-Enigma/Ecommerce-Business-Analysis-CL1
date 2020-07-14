@@ -133,21 +133,30 @@ FROM orders
 WHERE created_at BETWEEN '2014-12-05' AND '2015-03-20'
 ;
 
-
 SELECT
-	primary_products.*,
-    order_items.product_id AS cross_sell_product_id
+	primary_product_id,
+    COUNT( order_id) AS total_orders,
+    COUNT( CASE WHEN cross_sell_product_id = 1 THEN order_id ELSE NULL END ) AS xsold_p1,
+    COUNT( CASE WHEN cross_sell_product_id = 2 THEN order_id ELSE NULL END ) AS xsold_p2,
+    COUNT( CASE WHEN cross_sell_product_id = 3 THEN order_id ELSE NULL END ) AS xsold_p3,
+    COUNT( CASE WHEN cross_sell_product_id = 4 THEN order_id ELSE NULL END ) AS xsold_p4,
+    COUNT( CASE WHEN cross_sell_product_id = 1 THEN order_id ELSE NULL END ) / COUNT(order_id) AS p1_xsold_rt,
+    COUNT( CASE WHEN cross_sell_product_id = 2 THEN order_id ELSE NULL END ) / COUNT(order_id) AS p2_xsold_rt,
+    COUNT( CASE WHEN cross_sell_product_id = 3 THEN order_id ELSE NULL END ) / COUNT(order_id) AS p3_xsold_rt,
+    COUNT( CASE WHEN cross_sell_product_id = 4 THEN order_id ELSE NULL END ) / COUNT(order_id) AS p4_xsold_rt
 
-FROM primary_products
-LEFT JOIN order_items
-	ON order_items.order_id = primary_products.order_id
-    AND order_items.is_primary_item = 0 -- only cross sell prods
+FROM(
+	SELECT
+		primary_products.*,
+		order_items.product_id AS cross_sell_product_id
+
+	FROM primary_products
+	LEFT JOIN order_items
+		ON order_items.order_id = primary_products.order_id
+		AND order_items.is_primary_item = 0 -- only cross sell prods
+	) AS primary_w_cross_sell
+GROUP BY 1
 ;
 
 DROP TABLE primary_products;
--- self join? include secondary and tertiary items in same row? per order?
-
--- note for this final analysis
-
--- remember to include the summary here
 
